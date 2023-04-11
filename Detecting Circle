@@ -1,0 +1,55 @@
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+import openpyxl
+
+
+def Detect_Center(path):
+    minDist = 200
+    param1 = 30 #500
+    param2 = 50 #200 #smaller value-> more false circles
+    minRadius = 350
+    maxRadius = 400 #10
+
+
+    img = cv2.imread(path)
+    p = img.shape
+    print (p)
+    img = cv2.resize(img, (int(p[0]/10), int(p[1]/10))) ## Resizing for view only
+    # Display original image
+    cv2.imshow('Original', img)
+
+    #cv2.waitKey(0)
+
+    # Convert to graycsale
+    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # Blur the image for better edge detection
+    img_blur = cv2.GaussianBlur(img_gray, (3,3), 0) 
+
+    
+    # Canny Edge Detection
+    edges = cv2.Canny(image=img_blur, threshold1=50, threshold2=200) # Canny Edge Detection
+    # Display Canny Edge Detection Image
+    #cv2.imshow('Canny Edge Detection', edges)
+    #cv2.waitKey(0)
+
+
+    # docstring of HoughCircles: HoughCircles(image, method, dp, minDist[, circles[, param1[, param2[, minRadius[, maxRadius]]]]]) -> circles
+    circles = cv2.HoughCircles(edges, cv2.HOUGH_GRADIENT, 1, minDist, param1=param1, param2=param2, minRadius=minRadius, maxRadius=maxRadius)
+
+    if circles is not None:
+        circles = np.uint16(np.around(circles))
+        for i in circles[0,:]:
+            cv2.circle(edges, (i[0], i[1]), i[2], (255, 0, 0), 2)
+            cv2.circle(edges, (i[0], i[1]), 1, (255, 0, 0), 3)
+            #cv2.circle(img_blur, (i[0], i[1]), 371, (255, 255, 0), 5)
+
+    # Show result for testing:
+    #cv2.imshow('img', edges)
+    #cv2.waitKey(0)
+
+    cv2.destroyAllWindows()
+    norm_factor=round(1500/i[2]/10,6)
+    x=round(i[0]*10,2); y=round(i[1]*10,2); r=round(i[2]*10,2)
+    print(f'x:{x}, y:{y},radius:{r} in cm, Normalization factor mm/pixel:{norm_factor}')
+    return x,y,r, norm_factor
